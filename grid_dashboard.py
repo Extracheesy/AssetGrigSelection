@@ -72,6 +72,15 @@ app.layout = html.Div(id='parent', children=[
     dcc.Graph(id='graph_bar'),
     dcc.Graph(id="graph_close"),
 
+    dcc.Slider(0, 100, 5,
+               value=0,
+               id='my-slider'
+               ),
+    html.Div(id='slider-output-container'),
+
+    dcc.Graph(id='graph_bar_reduced'),
+    dcc.Graph(id="graph_zone_reduced"),
+
     html.Div(
         dcc.Dropdown(id='dropdown_grid_table',
                      options=['df_grid', 'df_symbol'],
@@ -125,6 +134,34 @@ def update_table_trades(value):
     columns = [{'name': col, 'id': col} for col in df.columns]
     data = df.to_dict(orient='records')
     return data, columns
+
+@app.callback(
+    Output('slider-output-container', 'children'),
+    Output("graph_bar_reduced", "figure"),
+    Output("graph_zone_reduced", "figure"),
+    Input('my-slider', 'value'))
+def update_output(value):
+    df_symbol_filtered = config.df_symbol.copy()
+    df_grid_filtered = config.df_grid.copy()
+
+    max_symbol = max(df_symbol_filtered['close_zone'])
+    max_grid = max(df_grid_filtered['sum'])
+
+    # 100 -> max
+    # val -> ...       ... = max * val / 100
+    symbol_threshold = max_symbol * value / 100
+    grid_threshold = max_grid * value / 100
+
+    df_symbol_filtered.loc[df_symbol_filtered["close_zone"] <= symbol_threshold, "close_zone"] = 0
+    df_symbol_filtered["close_zone"] = df_symbol_filtered["close_zone"] * -1
+
+    df_grid_filtered.loc[df_grid_filtered["sum"] <= grid_threshold, "sum"] = 0
+
+
+    figure_zone = px.scatter(df_symbol_filtered, y='close_zone', height=400, text='close_zone')
+    figure_bar = px.bar(df_grid_filtered, y='sum', height=400, text='sum')
+
+    return 'You have selected "{}"'.format(value), figure_bar, figure_zone
 
 if __name__ == '__main__':
     app.run_server()
