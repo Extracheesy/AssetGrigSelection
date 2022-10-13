@@ -153,10 +153,9 @@ def update_output(value):
     grid_threshold = max_grid * value / 100
 
     df_symbol_filtered.loc[df_symbol_filtered["close_zone"] <= symbol_threshold, "close_zone"] = 0
-    df_symbol_filtered["close_zone"] = df_symbol_filtered["close_zone"] * -1
+    df_symbol_filtered["close_zone"] = df_symbol_filtered["close_zone"] * -1  # Modif CEDE work around -1
 
     df_grid_filtered.loc[df_grid_filtered["sum"] <= grid_threshold, "sum"] = 0
-
 
     figure_zone = px.scatter(df_symbol_filtered, y='close_zone', height=400, text='close_zone')
     figure_bar = px.bar(df_grid_filtered, y='sum', height=400, text='sum')
